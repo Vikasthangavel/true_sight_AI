@@ -1,8 +1,6 @@
 # 🛡️ TrueSight AI — Video Authenticity Detector
 
-<p align="center">
-  <img src="AI.jpg" alt="TrueSight AI Banner" width="600"/>
-</p>
+
 
 > **TrueSight AI** is an AI-powered deepfake and synthetic video detection platform built for the modern era of misinformation. Powered by Roboflow's inference engine, it analyzes video frames with multi-mode scanning to deliver a forensic-grade authenticity verdict — complete with a downloadable PDF report.
 
