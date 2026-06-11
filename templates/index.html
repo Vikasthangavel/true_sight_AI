@@ -1,0 +1,2558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrueSight AI | Video Authenticity Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f0ff;
+            --primary-dark: #0099aa;
+            --secondary: #7b2cbf;
+            --accent: #ff006e;
+            --ai-color: #ff4444;
+            --real-color: #00ff88;
+            --bg-dark: #0a0a0f;
+            --bg-card: rgba(15, 15, 25, 0.8);
+            --border-glow: rgba(0, 240, 255, 0.3);
+            --text-primary: #ffffff;
+            --text-secondary: #8892b0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--text-primary);
+        }
+
+        /* Animated Tech Background */
+        .tech-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .grid-overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .floating-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: float 15s infinite;
+            box-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary);
+        }
+
+        .particle:nth-child(1) { left: 10%; animation-delay: 0s; animation-duration: 20s; }
+        .particle:nth-child(2) { left: 20%; animation-delay: 2s; animation-duration: 18s; }
+        .particle:nth-child(3) { left: 30%; animation-delay: 4s; animation-duration: 22s; }
+        .particle:nth-child(4) { left: 40%; animation-delay: 1s; animation-duration: 19s; }
+        .particle:nth-child(5) { left: 50%; animation-delay: 3s; animation-duration: 21s; }
+        .particle:nth-child(6) { left: 60%; animation-delay: 5s; animation-duration: 17s; }
+        .particle:nth-child(7) { left: 70%; animation-delay: 2s; animation-duration: 23s; }
+        .particle:nth-child(8) { left: 80%; animation-delay: 4s; animation-duration: 16s; }
+        .particle:nth-child(9) { left: 90%; animation-delay: 1s; animation-duration: 24s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-100vh) scale(1); opacity: 0; }
+        }
+
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            animation: scanLine 8s linear infinite;
+            opacity: 0.3;
+        }
+
+        @keyframes scanLine {
+            0% { top: -2px; }
+            100% { top: 100%; }
+        }
+
+        .hex-pattern {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%2300f0ff' fill-opacity='1'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        /* Main Container */
+        .main-container {
+            position: relative;
+            z-index: 1;
+            padding: 30px 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-top: 20px;
+        }
+
+        .logo-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #fff;
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 30px rgba(0, 240, 255, 0.4); }
+            50% { box-shadow: 0 0 50px rgba(0, 240, 255, 0.6), 0 0 80px rgba(0, 240, 255, 0.3); }
+        }
+
+        .logo-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .header-subtitle {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            margin-top: 10px;
+        }
+
+        .header-subtitle span {
+            color: var(--primary);
+        }
+
+        .status-bar {
+            display: inline-flex;
+            align-items: center;
+            gap: 20px;
+            background: var(--bg-card);
+            padding: 10px 25px;
+            border-radius: 50px;
+            border: 1px solid var(--border-glow);
+            margin-top: 20px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--real-color);
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Card Styles */
+        .cyber-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 20px;
+            padding: 35px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            transition: all 0.4s ease;
+        }
+
+        .cyber-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+        }
+
+        .cyber-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.03), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .cyber-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 40px rgba(0, 240, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        /* Tabs */
+        .input-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 18px 25px;
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text-secondary);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tab-btn:hover {
+            background: rgba(0, 240, 255, 0.05);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(123, 44, 191, 0.15));
+            color: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2), inset 0 0 20px rgba(0, 240, 255, 0.05);
+        }
+
+        .tab-btn i {
+            margin-right: 10px;
+        }
+
+        /* Upload Zone */
+        .upload-container, .url-input-container, .trending-container {
+            display: none;
+        }
+
+        .upload-container.active, .url-input-container.active, .trending-container.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .upload-zone {
+            border: 2px dashed rgba(0, 240, 255, 0.3);
+            border-radius: 15px;
+            padding: 60px 40px;
+            text-align: center;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            position: relative;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .upload-zone::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 15px;
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.02), transparent);
+            pointer-events: none;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: rgba(0, 240, 255, 0.03);
+            box-shadow: inset 0 0 30px rgba(0, 240, 255, 0.05);
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(0, 240, 255, 0.08);
+            box-shadow: 0 0 40px rgba(0, 240, 255, 0.2);
+        }
+
+        .upload-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 25px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: #fff;
+            box-shadow: 0 10px 40px rgba(0, 240, 255, 0.3);
+            position: relative;
+        }
+
+        .upload-icon::after {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            opacity: 0.5;
+            animation: ring 2s ease-out infinite;
+        }
+
+        @keyframes ring {
+            0% { transform: scale(1); opacity: 0.5; }
+            100% { transform: scale(1.3); opacity: 0; }
+        }
+
+        .upload-zone h4 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .upload-zone p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .format-tags {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .format-tag {
+            padding: 5px 15px;
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--primary);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        #videoInput {
+            display: none;
+        }
+
+        /* URL Input */
+        .url-input-group {
+            text-align: center;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 240, 255, 0.1);
+        }
+
+        .url-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 25px;
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #fff;
+            box-shadow: 0 10px 30px rgba(255, 0, 0, 0.3);
+        }
+
+        .url-input-group h4 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+
+        .url-input {
+            width: 100%;
+            padding: 18px 25px;
+            border: 2px solid rgba(0, 240, 255, 0.2);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            color: #fff;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .url-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+            background: rgba(0, 240, 255, 0.02);
+        }
+
+        .url-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        .platform-badges {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .platform-badge {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .platform-badge.youtube {
+            background: rgba(255, 0, 0, 0.15);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            color: #ff4444;
+        }
+
+        .platform-badge.direct {
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            color: var(--primary);
+        }
+
+        /* Scan Mode Selector */
+        .scan-mode-selector {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            border: 1px solid var(--border-glow);
+        }
+
+        .scan-mode-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .scan-mode-options {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .scan-mode-option {
+            cursor: pointer;
+        }
+
+        .scan-mode-option input {
+            display: none;
+        }
+
+        .scan-mode-card {
+            padding: 15px 25px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(0, 240, 255, 0.2);
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .scan-mode-card i {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .scan-mode-card .mode-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .scan-mode-card .mode-desc {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        .scan-mode-option:hover .scan-mode-card {
+            border-color: var(--primary);
+            background: rgba(0, 240, 255, 0.05);
+        }
+
+        .scan-mode-option:hover .scan-mode-card i {
+            color: var(--primary);
+        }
+
+        .scan-mode-option.active .scan-mode-card {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(123, 44, 191, 0.15));
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+        }
+
+        .scan-mode-option.active .scan-mode-card i {
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
+        }
+
+        .scan-mode-option.active .scan-mode-card .mode-name {
+            color: var(--primary);
+        }
+
+        /* Deep mode - Orange accent */
+        .scan-mode-option[data-mode="deep"].active .scan-mode-card {
+            border-color: #ff9500;
+            background: linear-gradient(135deg, rgba(255, 149, 0, 0.15), rgba(255, 100, 0, 0.1));
+            box-shadow: 0 0 20px rgba(255, 149, 0, 0.2);
+        }
+
+        .scan-mode-option[data-mode="deep"].active .scan-mode-card i {
+            color: #ff9500;
+            text-shadow: 0 0 10px #ff9500;
+        }
+
+        .scan-mode-option[data-mode="deep"].active .scan-mode-card .mode-name {
+            color: #ff9500;
+        }
+
+        /* Ultra mode - Purple accent */
+        .scan-mode-option[data-mode="ultra"].active .scan-mode-card {
+            border-color: #bf5fff;
+            background: linear-gradient(135deg, rgba(191, 95, 255, 0.15), rgba(150, 50, 200, 0.1));
+            box-shadow: 0 0 20px rgba(191, 95, 255, 0.2);
+        }
+
+        .scan-mode-option[data-mode="ultra"].active .scan-mode-card i {
+            color: #bf5fff;
+            text-shadow: 0 0 10px #bf5fff;
+        }
+
+        .scan-mode-option[data-mode="ultra"].active .scan-mode-card .mode-name {
+            color: #bf5fff;
+        }
+
+        /* Analyze Button */
+        .btn-analyze {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 18px 50px;
+            background: linear-gradient(135deg, var(--primary-dark), var(--secondary));
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-analyze::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .btn-analyze:hover::before {
+            left: 100%;
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 240, 255, 0.4);
+        }
+
+        .btn-analyze:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-analyze:disabled::before {
+            display: none;
+        }
+
+        /* Video Preview */
+        .video-preview-container {
+            margin-top: 25px;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid var(--border-glow);
+        }
+
+        .video-preview {
+            width: 100%;
+            display: block;
+        }
+
+        .file-name {
+            color: var(--primary);
+            font-family: 'Share Tech Mono', monospace;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            margin: 0;
+            border-top: 1px solid var(--border-glow);
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 15, 0.95);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .loading-animation {
+            position: relative;
+            width: 150px;
+            height: 150px;
+        }
+
+        .loading-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 3px solid transparent;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1.5s linear infinite;
+        }
+
+        .loading-ring:nth-child(2) {
+            width: 80%;
+            height: 80%;
+            top: 10%;
+            left: 10%;
+            border-top-color: var(--secondary);
+            animation-duration: 2s;
+            animation-direction: reverse;
+        }
+
+        .loading-ring:nth-child(3) {
+            width: 60%;
+            height: 60%;
+            top: 20%;
+            left: 20%;
+            border-top-color: var(--accent);
+            animation-duration: 1s;
+        }
+
+        .loading-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: var(--primary);
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-family: 'Orbitron', sans-serif;
+            color: #fff;
+            margin-top: 30px;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
+
+        .loading-subtext {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text-secondary);
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .loading-eta {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary);
+            margin-top: 20px;
+            font-size: 1.5rem;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary);
+        }
+
+        .loading-eta-label {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            margin-top: 5px;
+            letter-spacing: 2px;
+        }
+
+        .loading-progress-bar {
+            width: 250px;
+            height: 4px;
+            background: rgba(0, 240, 255, 0.2);
+            border-radius: 2px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .loading-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 0%;
+            border-radius: 2px;
+            animation: progressPulse 2s ease-in-out infinite;
+            transition: width 0.3s ease;
+        }
+
+        @keyframes progressPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Trending Videos Section */
+        .trending-container {
+            padding: 20px 0;
+        }
+
+        .trending-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .trending-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .trending-title i {
+            color: #ff4444;
+        }
+
+        .refresh-btn {
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(0, 240, 255, 0.2);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+        }
+
+        .refresh-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .refresh-btn i {
+            margin-right: 5px;
+        }
+
+        .trending-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .video-card {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-glow);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .video-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 240, 255, 0.2);
+        }
+
+        .video-thumbnail {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%;
+            background: #000;
+        }
+
+        .video-thumbnail img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-duration {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .news-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 8px rgba(255, 68, 68, 0.4);
+            animation: pulse-news 2s infinite;
+        }
+
+        @keyframes pulse-news {
+            0%, 100% { box-shadow: 0 2px 8px rgba(255, 68, 68, 0.4); }
+            50% { box-shadow: 0 2px 15px rgba(255, 68, 68, 0.7); }
+        }
+
+        .news-card {
+            border: 1px solid rgba(255, 68, 68, 0.3);
+        }
+
+        .news-card:hover {
+            border-color: rgba(255, 68, 68, 0.6);
+            box-shadow: 0 8px 30px rgba(255, 68, 68, 0.2);
+        }
+
+        .video-info {
+            padding: 12px;
+        }
+
+        .video-title {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.3;
+        }
+
+        .video-channel {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .video-views {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--primary);
+        }
+
+        .video-card .analyze-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 240, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .video-card:hover .analyze-overlay {
+            opacity: 1;
+        }
+
+        .analyze-overlay span {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #000;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .trending-loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .trending-loading i {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        .trending-error {
+            text-align: center;
+            padding: 40px;
+            color: var(--ai-color);
+        }
+
+        .trending-error i {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        /* Results Section */
+        .results-section {
+            display: none;
+            margin-top: 40px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* Result Background Overlay Colors */
+        .result-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .result-overlay.active {
+            opacity: 1;
+        }
+
+        .result-overlay.real {
+            background: radial-gradient(ellipse at center, rgba(0, 255, 100, 0.15) 0%, rgba(0, 180, 80, 0.08) 50%, transparent 80%);
+            box-shadow: inset 0 0 150px rgba(0, 255, 100, 0.1);
+        }
+
+        .result-overlay.fake {
+            background: radial-gradient(ellipse at center, rgba(255, 50, 50, 0.15) 0%, rgba(200, 0, 0, 0.08) 50%, transparent 80%);
+            box-shadow: inset 0 0 150px rgba(255, 50, 50, 0.1);
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            font-size: 1rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-glow);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+        }
+
+        .stat-label {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Verdict Card */
+        .verdict-card {
+            text-align: center;
+            padding: 50px 40px;
+            position: relative;
+        }
+
+        .verdict-card.ai {
+            border-color: var(--ai-color);
+            box-shadow: 0 0 50px rgba(255, 68, 68, 0.2), inset 0 0 50px rgba(255, 68, 68, 0.05);
+        }
+
+        .verdict-card.real {
+            border-color: var(--real-color);
+            box-shadow: 0 0 50px rgba(0, 255, 136, 0.2), inset 0 0 50px rgba(0, 255, 136, 0.05);
+        }
+
+        .verdict-card.ai::before {
+            background: linear-gradient(90deg, transparent, var(--ai-color), transparent);
+        }
+
+        .verdict-card.real::before {
+            background: linear-gradient(90deg, transparent, var(--real-color), transparent);
+        }
+
+        .verdict-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            position: relative;
+        }
+
+        .verdict-icon.ai {
+            background: linear-gradient(135deg, rgba(255, 68, 68, 0.2), rgba(255, 68, 68, 0.05));
+            color: var(--ai-color);
+            border: 2px solid var(--ai-color);
+            box-shadow: 0 0 40px rgba(255, 68, 68, 0.3);
+        }
+
+        .verdict-icon.real {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 136, 0.05));
+            color: var(--real-color);
+            border: 2px solid var(--real-color);
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.3);
+        }
+
+        .verdict-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .verdict-title.ai {
+            color: var(--ai-color);
+            text-shadow: 0 0 30px rgba(255, 68, 68, 0.5);
+        }
+
+        .verdict-title.real {
+            color: var(--real-color);
+            text-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+        }
+
+        .confidence-display {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin: 20px 0;
+        }
+
+        .confidence-display.ai {
+            color: var(--ai-color);
+        }
+
+        .confidence-display.real {
+            color: var(--real-color);
+        }
+
+        .confidence-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px auto;
+            max-width: 400px;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        .confidence-fill.ai {
+            background: linear-gradient(90deg, var(--ai-color), #ff6666);
+            box-shadow: 0 0 20px var(--ai-color);
+        }
+
+        .confidence-fill.real {
+            background: linear-gradient(90deg, var(--real-color), #66ffaa);
+            box-shadow: 0 0 20px var(--real-color);
+        }
+
+        .verdict-details {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-top: 20px;
+        }
+
+        /* Analysis Report Card */
+        .report-card {
+            text-align: left;
+        }
+
+        .report-summary {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            padding: 20px;
+            background: rgba(0, 240, 255, 0.05);
+            border-left: 4px solid var(--primary);
+            border-radius: 0 10px 10px 0;
+            margin-bottom: 25px;
+        }
+
+        .report-summary.ai {
+            border-left-color: var(--ai-color);
+            background: rgba(255, 68, 68, 0.05);
+        }
+
+        .report-summary.real {
+            border-left-color: var(--real-color);
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .report-reasons {
+            margin-bottom: 25px;
+        }
+
+        .report-reason-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-glow);
+            transition: all 0.3s ease;
+        }
+
+        .report-reason-item:hover {
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .report-reason-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .report-reason-icon.ai {
+            background: rgba(255, 68, 68, 0.2);
+            color: var(--ai-color);
+            border: 1px solid var(--ai-color);
+        }
+
+        .report-reason-icon.real {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--real-color);
+            border: 1px solid var(--real-color);
+        }
+
+        .report-reason-content {
+            flex: 1;
+        }
+
+        .report-reason-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.95rem;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .report-reason-detail {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .report-technical {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .report-technical-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .report-technical-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .report-technical-item {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            padding: 10px;
+            background: rgba(0, 240, 255, 0.05);
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .report-recommendation {
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .report-recommendation.ai {
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid rgba(255, 68, 68, 0.3);
+            color: #ffaaaa;
+        }
+
+        .report-recommendation.real {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            color: #aaffcc;
+        }
+
+        .report-recommendation i {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .report-recommendation.ai i {
+            color: var(--ai-color);
+        }
+
+        .report-recommendation.real i {
+            color: var(--real-color);
+        }
+
+        /* PDF Download Section */
+        .pdf-download-section {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px solid rgba(0, 240, 255, 0.2);
+            text-align: center;
+        }
+
+        .pdf-download-btn {
+            background: linear-gradient(135deg, #ff3366, #ff6b35);
+            border: none;
+            border-radius: 12px;
+            padding: 16px 40px;
+            font-family: 'Orbitron', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(255, 51, 102, 0.3), 0 0 40px rgba(255, 51, 102, 0.1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .pdf-download-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 0 30px rgba(255, 51, 102, 0.5), 0 0 60px rgba(255, 51, 102, 0.2);
+        }
+
+        .pdf-download-btn:active {
+            transform: translateY(0);
+        }
+
+        .pdf-download-btn i {
+            font-size: 1.3rem;
+        }
+
+        .pdf-download-btn:disabled {
+            background: linear-gradient(135deg, #555, #444);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .pdf-download-btn.generating {
+            background: linear-gradient(135deg, #00f0ff, #00c4cc);
+            animation: pulse-btn 1.5s infinite;
+        }
+
+        @keyframes pulse-btn {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 240, 255, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(0, 240, 255, 0.6); }
+        }
+
+        .pdf-status {
+            margin-top: 15px;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            min-height: 20px;
+        }
+
+        .pdf-status.success {
+            color: var(--real-color);
+        }
+
+        .pdf-status.error {
+            color: var(--ai-color);
+        }
+
+        /* Frame Cards */
+        .frame-card {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-glow);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .frame-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 240, 255, 0.15);
+        }
+
+        .frame-img {
+            width: 100%;
+            display: block;
+        }
+
+        .frame-info {
+            padding: 20px;
+        }
+
+        .frame-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #fff;
+        }
+
+        .frame-timestamp {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+
+        .frame-prediction {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .frame-prediction.ai {
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid var(--ai-color);
+        }
+
+        .frame-prediction.real {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid var(--real-color);
+        }
+
+        .prediction-class {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .prediction-class.ai { color: var(--ai-color); }
+        .prediction-class.real { color: var(--real-color); }
+
+        .prediction-confidence {
+            font-family: 'Share Tech Mono', monospace;
+            float: right;
+        }
+
+        /* Footer */
+        .footer-info {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            border-top: 1px solid var(--border-glow);
+        }
+
+        .footer-info p {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .footer-info .tech-stack {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .footer-info .tech-item {
+            padding: 5px 15px;
+            background: rgba(0, 240, 255, 0.05);
+            border: 1px solid var(--border-glow);
+            border-radius: 5px;
+            font-size: 0.8rem;
+            color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .logo-text { font-size: 1.8rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .verdict-title { font-size: 1.8rem; }
+            .confidence-display { font-size: 2.5rem; }
+            .input-tabs { flex-direction: column; }
+            .status-bar { flex-direction: column; gap: 10px; }
+            .scan-mode-options { flex-direction: column; }
+            .scan-mode-card { min-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Result Background Overlay -->
+    <div class="result-overlay" id="resultOverlay"></div>
+    
+    <!-- Animated Background -->
+    <div class="tech-background">
+        <div class="grid-overlay"></div>
+        <div class="hex-pattern"></div>
+        <div class="floating-particles">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+        </div>
+        <div class="scan-line"></div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-animation">
+            <div class="loading-ring"></div>
+            <div class="loading-ring"></div>
+            <div class="loading-ring"></div>
+            <div class="loading-center"><i class="fas fa-microchip"></i></div>
+        </div>
+        <div class="loading-text" id="loadingTitle">ANALYZING VIDEO</div>
+        <div class="loading-subtext" id="loadingSubtext">Extracting frames...</div>
+        <div class="loading-eta" id="loadingEta" style="display: none;">00:00</div>
+        <div class="loading-eta-label" id="loadingEtaLabel" style="display: none;">ELAPSED TIME</div>
+        <div class="loading-progress-bar" id="loadingProgressBar" style="display: none;">
+            <div class="loading-progress-fill" id="loadingProgressFill"></div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <i class="fas fa-shield-halved"></i>
+                </div>
+                <span class="logo-text"> TrueSight AI</span>
+            </div>
+            <p class="header-subtitle">[ <span>ADVANCED VIDEO AUTHENTICITY ANALYZER</span> ]</p>
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-dot"></div>
+                    <span>SYSTEM ONLINE</span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-brain" style="color: var(--primary);"></i>
+                    <span>AI MODEL: ACTIVE</span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-server" style="color: var(--primary);"></i>
+                    <span>ROBOFLOW: CONNECTED</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Card -->
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+                <div class="cyber-card">
+                    <!-- Input Tabs -->
+                    <div class="input-tabs">
+                        <button class="tab-btn active" id="uploadTab" onclick="switchTab('upload')">
+                            <i class="fas fa-upload"></i> Upload File
+                        </button>
+                        <button class="tab-btn" id="urlTab" onclick="switchTab('url')">
+                            <i class="fab fa-youtube"></i> YouTube / URL
+                        </button>
+                        <button class="tab-btn" id="trendingTab" onclick="switchTab('trending')">
+                            <i class="fas fa-fire"></i> Trending
+                        </button>
+                        <button class="tab-btn" id="newsTab" onclick="switchTab('news')">
+                            <i class="fas fa-newspaper"></i> Breaking News
+                        </button>
+                    </div>
+
+                    <!-- File Upload Container -->
+                    <div class="upload-container active" id="uploadContainer">
+                        <div class="upload-zone" id="uploadZone">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-arrow-up"></i>
+                            </div>
+                            <h4>DROP VIDEO FILE HERE</h4>
+                            <p>or click to browse your files</p>
+                            <div class="format-tags">
+                                <span class="format-tag">MP4</span>
+                                <span class="format-tag">AVI</span>
+                                <span class="format-tag">MOV</span>
+                                <span class="format-tag">MKV</span>
+                                <span class="format-tag">WEBM</span>
+                            </div>
+                            <input type="file" id="videoInput" accept="video/*">
+                        </div>
+
+                        <div id="videoPreviewContainer" class="video-preview-container" style="display: none;">
+                            <video id="videoPreview" class="video-preview" controls></video>
+                            <p class="file-name" id="fileName"></p>
+                        </div>
+                    </div>
+
+                    <!-- URL Input Container -->
+                    <div class="url-input-container" id="urlContainer">
+                        <div class="url-input-group">
+                            <div class="url-icon">
+                                <i class="fab fa-youtube"></i>
+                            </div>
+                            <h4>ENTER VIDEO URL</h4>
+                            <p style="color: var(--text-secondary);">Paste a YouTube link or direct video URL</p>
+                            <input type="url" class="url-input" id="videoUrlInput" 
+                                   placeholder="https://www.youtube.com/watch?v=... or direct URL">
+                            <div class="platform-badges">
+                                <span class="platform-badge youtube">
+                                    <i class="fab fa-youtube"></i> YouTube
+                                </span>
+                                <span class="platform-badge youtube">
+                                    <i class="fas fa-bolt"></i> Shorts
+                                </span>
+                                <span class="platform-badge direct">
+                                    <i class="fas fa-link"></i> Direct URL
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trending Videos Container -->
+                    <div class="trending-container" id="trendingContainer">
+                        <div class="trending-header">
+                            <div class="trending-title">
+                                <i class="fas fa-fire"></i>
+                                TRENDING VIDEOS
+                            </div>
+                            <button class="refresh-btn" id="refreshTrendingBtn" onclick="loadTrendingVideos()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
+                            Click on any video to analyze it for deepfake detection
+                        </p>
+                        <div id="trendingVideosGrid" class="trending-grid">
+                            <div class="trending-loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Loading trending videos...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Breaking News Container -->
+                    <div class="trending-container" id="newsContainer" style="display: none;">
+                        <div class="trending-header">
+                            <div class="trending-title" style="color: #ff4444;">
+                                <i class="fas fa-newspaper"></i>
+                                BREAKING NEWS
+                            </div>
+                            <button class="refresh-btn" id="refreshNewsBtn" onclick="loadBreakingNews()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <p style="color: var(--text-secondary); margin-bottom: 20px; font-size: 0.9rem;">
+                            Analyze breaking news videos for potential deepfakes and misinformation
+                        </p>
+                        <div id="newsVideosGrid" class="trending-grid">
+                            <div class="trending-loading">
+                                <i class="fas fa-spinner"></i>
+                                <p>Loading breaking news...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center" id="analyzeButtonContainer">
+                        <!-- Scan Mode Selector -->
+                        <div class="scan-mode-selector" id="scanModeSelector">
+                            <div class="scan-mode-title">
+                                <i class="fas fa-sliders-h"></i> SCAN MODE
+                            </div>
+                            <div class="scan-mode-options">
+                                <label class="scan-mode-option active" data-mode="quick">
+                                    <input type="radio" name="scanMode" value="quick" checked>
+                                    <div class="scan-mode-card">
+                                        <i class="fas fa-bolt"></i>
+                                        <span class="mode-name">Quick</span>
+                                        <span class="mode-desc">3 frames • Fast</span>
+                                    </div>
+                                </label>
+                                <label class="scan-mode-option" data-mode="deep">
+                                    <input type="radio" name="scanMode" value="deep">
+                                    <div class="scan-mode-card">
+                                        <i class="fas fa-search"></i>
+                                        <span class="mode-name">Deep</span>
+                                        <span class="mode-desc">7 frames • Balanced</span>
+                                    </div>
+                                </label>
+                                <label class="scan-mode-option" data-mode="ultra">
+                                    <input type="radio" name="scanMode" value="ultra">
+                                    <div class="scan-mode-card">
+                                        <i class="fas fa-microscope"></i>
+                                        <span class="mode-name">Ultra</span>
+                                        <span class="mode-desc">10 frames • Thorough</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button class="btn-analyze" id="analyzeBtn" disabled>
+                            <i class="fas fa-satellite-dish"></i>
+                            <span>INITIALIZE SCAN</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection">
+            <!-- Video Info -->
+            <div class="row justify-content-center mb-4">
+                <div class="col-lg-9">
+                    <div class="cyber-card">
+                        <div class="section-title">
+                            <i class="fas fa-chart-bar"></i>
+                            VIDEO METRICS
+                        </div>
+                        <div class="stats-grid" id="videoStats"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Verdict -->
+            <div class="row justify-content-center mb-4">
+                <div class="col-lg-9">
+                    <div class="cyber-card verdict-card" id="verdictCard">
+                        <div class="verdict-icon" id="verdictIcon">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <h2 class="verdict-title" id="verdictTitle">AI GENERATED</h2>
+                        <div class="confidence-display" id="confidenceDisplay">98.51%</div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" id="confidenceFill" style="width: 98.51%"></div>
+                        </div>
+                        <p class="verdict-details" id="verdictDetails"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analysis Report -->
+            <div class="row justify-content-center mb-4">
+                <div class="col-lg-9">
+                    <div class="cyber-card report-card">
+                        <div class="section-title">
+                            <i class="fas fa-file-alt"></i>
+                            ANALYSIS REPORT
+                        </div>
+                        <div class="report-summary" id="reportSummary"></div>
+                        <div class="report-reasons" id="reportReasons"></div>
+                        <div class="report-technical" id="reportTechnical"></div>
+                        <div class="report-recommendation" id="reportRecommendation"></div>
+                        
+                        <!-- PDF Download Button -->
+                        <div class="pdf-download-section">
+                            <button class="pdf-download-btn" id="downloadPdfBtn" onclick="downloadPdfReport()">
+                                <i class="fas fa-file-pdf"></i>
+                                <span>Download Forensic Report (PDF)</span>
+                            </button>
+                            <div class="pdf-status" id="pdfStatus"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Frame Analysis -->
+            <div class="row justify-content-center">
+                <div class="col-lg-11">
+                    <div class="cyber-card">
+                        <div class="section-title">
+                            <i class="fas fa-images"></i>
+                            FRAME ANALYSIS
+                        </div>
+                        <div class="row g-4" id="framesContainer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reset Button -->
+            <div class="text-center mt-4">
+                <button class="btn-analyze" id="resetBtn">
+                    <i class="fas fa-rotate"></i>
+                    <span>NEW SCAN</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-info">
+            <p>POWERED BY ADVANCED MACHINE LEARNING ALGORITHMS</p>
+            <div class="tech-stack">
+                <span class="tech-item"><i class="fab fa-python"></i> Python</span>
+                <span class="tech-item"><i class="fas fa-flask"></i> Flask</span>
+                <span class="tech-item"><i class="fas fa-brain"></i> Roboflow</span>
+                <span class="tech-item"><i class="fas fa-video"></i> OpenCV</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadZone = document.getElementById('uploadZone');
+        const videoInput = document.getElementById('videoInput');
+        const videoPreview = document.getElementById('videoPreview');
+        const videoPreviewContainer = document.getElementById('videoPreviewContainer');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const resultsSection = document.getElementById('resultsSection');
+        const fileName = document.getElementById('fileName');
+        const videoUrlInput = document.getElementById('videoUrlInput');
+        
+        let selectedFile = null;
+        let currentInputMode = 'upload';
+        let etaTimer = null;
+        let etaSeconds = 0;
+        let currentScanMode = 'quick';
+        let lastAnalysisData = null;  // Store last analysis for PDF generation
+
+        // Scan mode selector handling
+        document.querySelectorAll('.scan-mode-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.scan-mode-option').forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+                currentScanMode = this.dataset.mode;
+                this.querySelector('input').checked = true;
+            });
+        });
+
+        function getScanMode() {
+            return currentScanMode;
+        }
+
+        function switchTab(mode) {
+            currentInputMode = mode;
+            document.getElementById('uploadTab').classList.toggle('active', mode === 'upload');
+            document.getElementById('urlTab').classList.toggle('active', mode === 'url');
+            document.getElementById('trendingTab').classList.toggle('active', mode === 'trending');
+            document.getElementById('newsTab').classList.toggle('active', mode === 'news');
+            document.getElementById('uploadContainer').classList.toggle('active', mode === 'upload');
+            document.getElementById('urlContainer').classList.toggle('active', mode === 'url');
+            document.getElementById('trendingContainer').style.display = mode === 'trending' ? 'block' : 'none';
+            document.getElementById('newsContainer').style.display = mode === 'news' ? 'block' : 'none';
+            
+            // Hide/show analyze button based on mode
+            const analyzeButtonContainer = document.getElementById('analyzeButtonContainer');
+            analyzeButtonContainer.style.display = (mode === 'trending' || mode === 'news') ? 'none' : 'block';
+            
+            // Load trending videos when switching to trending tab
+            if (mode === 'trending' && !trendingLoaded) {
+                loadTrendingVideos();
+            }
+            
+            // Load breaking news when switching to news tab
+            if (mode === 'news' && !newsLoaded) {
+                loadBreakingNews();
+            }
+            
+            updateAnalyzeButton();
+        }
+
+        let trendingLoaded = false;
+        let newsLoaded = false;
+
+        function loadTrendingVideos() {
+            const grid = document.getElementById('trendingVideosGrid');
+            const refreshBtn = document.getElementById('refreshTrendingBtn');
+            
+            grid.innerHTML = `
+                <div class="trending-loading" style="grid-column: 1 / -1;">
+                    <i class="fas fa-spinner"></i>
+                    <p>Loading trending videos...</p>
+                </div>
+            `;
+            refreshBtn.disabled = true;
+            
+            fetch('/trending?limit=12')
+                .then(response => response.json())
+                .then(data => {
+                    refreshBtn.disabled = false;
+                    if (data.success && data.videos) {
+                        trendingLoaded = true;
+                        displayTrendingVideos(data.videos);
+                    } else {
+                        grid.innerHTML = `
+                            <div class="trending-error" style="grid-column: 1 / -1;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <p>${data.error || 'Failed to load trending videos'}</p>
+                                <button class="refresh-btn" onclick="loadTrendingVideos()" style="margin-top: 15px;">
+                                    <i class="fas fa-redo"></i> Try Again
+                                </button>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    refreshBtn.disabled = false;
+                    grid.innerHTML = `
+                        <div class="trending-error" style="grid-column: 1 / -1;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>Error loading videos: ${error.message}</p>
+                            <button class="refresh-btn" onclick="loadTrendingVideos()" style="margin-top: 15px;">
+                                <i class="fas fa-redo"></i> Try Again
+                            </button>
+                        </div>
+                    `;
+                });
+        }
+
+        function displayTrendingVideos(videos) {
+            const grid = document.getElementById('trendingVideosGrid');
+            
+            if (!videos || videos.length === 0) {
+                grid.innerHTML = `
+                    <div class="trending-error" style="grid-column: 1 / -1;">
+                        <i class="fas fa-video-slash"></i>
+                        <p>No trending videos found</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = videos.map(video => `
+                <div class="video-card" onclick="analyzeTrendingVideo('${video.url}', '${escapeHtml(video.title)}')">
+                    <div class="video-thumbnail">
+                        <img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" onerror="this.src='https://via.placeholder.com/320x180?text=No+Thumbnail'">
+                        <span class="video-duration">${formatDuration(video.duration)}</span>
+                        <div class="analyze-overlay">
+                            <span><i class="fas fa-search"></i> ANALYZE</span>
+                        </div>
+                    </div>
+                    <div class="video-info">
+                        <div class="video-title">${escapeHtml(video.title)}</div>
+                        <div class="video-channel"><i class="fas fa-user"></i> ${escapeHtml(video.channel)}</div>
+                        <div class="video-views"><i class="fas fa-eye"></i> ${formatViewCount(video.view_count)} views</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadBreakingNews() {
+            const grid = document.getElementById('newsVideosGrid');
+            const refreshBtn = document.getElementById('refreshNewsBtn');
+            
+            grid.innerHTML = `
+                <div class="trending-loading" style="grid-column: 1 / -1;">
+                    <i class="fas fa-spinner"></i>
+                    <p>Loading breaking news...</p>
+                </div>
+            `;
+            refreshBtn.disabled = true;
+            
+            fetch('/breaking-news?limit=12')
+                .then(response => response.json())
+                .then(data => {
+                    refreshBtn.disabled = false;
+                    if (data.success && data.videos) {
+                        newsLoaded = true;
+                        displayNewsVideos(data.videos);
+                    } else {
+                        grid.innerHTML = `
+                            <div class="trending-error" style="grid-column: 1 / -1;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <p>${data.error || 'Failed to load news videos'}</p>
+                                <button class="refresh-btn" onclick="loadBreakingNews()" style="margin-top: 15px;">
+                                    <i class="fas fa-redo"></i> Try Again
+                                </button>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    refreshBtn.disabled = false;
+                    grid.innerHTML = `
+                        <div class="trending-error" style="grid-column: 1 / -1;">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>Error loading news: ${error.message}</p>
+                            <button class="refresh-btn" onclick="loadBreakingNews()" style="margin-top: 15px;">
+                                <i class="fas fa-redo"></i> Try Again
+                            </button>
+                        </div>
+                    `;
+                });
+        }
+
+        function displayNewsVideos(videos) {
+            const grid = document.getElementById('newsVideosGrid');
+            
+            if (!videos || videos.length === 0) {
+                grid.innerHTML = `
+                    <div class="trending-error" style="grid-column: 1 / -1;">
+                        <i class="fas fa-newspaper"></i>
+                        <p>No news videos found</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = videos.map(video => `
+                <div class="video-card news-card" onclick="analyzeTrendingVideo('${video.url}', '${escapeHtml(video.title)}')">
+                    <div class="video-thumbnail">
+                        <img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" onerror="this.src='https://via.placeholder.com/320x180?text=No+Thumbnail'">
+                        <span class="video-duration">${formatDuration(video.duration)}</span>
+                        <span class="news-badge"><i class="fas fa-broadcast-tower"></i> NEWS</span>
+                        <div class="analyze-overlay">
+                            <span><i class="fas fa-search"></i> VERIFY</span>
+                        </div>
+                    </div>
+                    <div class="video-info">
+                        <div class="video-title">${escapeHtml(video.title)}</div>
+                        <div class="video-channel"><i class="fas fa-tv"></i> ${escapeHtml(video.channel)}</div>
+                        <div class="video-views"><i class="fas fa-eye"></i> ${formatViewCount(video.view_count)} views</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+
+        function formatDuration(seconds) {
+            if (!seconds) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function formatViewCount(count) {
+            if (!count) return '0';
+            if (count >= 1000000) return (count / 1000000).toFixed(1) + 'M';
+            if (count >= 1000) return (count / 1000).toFixed(1) + 'K';
+            return count.toString();
+        }
+
+        function analyzeTrendingVideo(url, title) {
+            // Switch to URL mode and populate the URL
+            switchTab('url');
+            videoUrlInput.value = url;
+            updateAnalyzeButton();
+            
+            // Auto-start analysis
+            analyzeBtn.click();
+        }
+
+        function updateAnalyzeButton() {
+            if (currentInputMode === 'upload') {
+                analyzeBtn.disabled = !selectedFile;
+            } else if (currentInputMode === 'url') {
+                analyzeBtn.disabled = !videoUrlInput.value.trim();
+            } else {
+                analyzeBtn.disabled = true;
+            }
+        }
+
+        videoUrlInput.addEventListener('input', updateAnalyzeButton);
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        uploadZone.addEventListener('click', () => videoInput.click());
+
+        videoInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('video/')) {
+                alert('Please select a video file');
+                return;
+            }
+            selectedFile = file;
+            fileName.textContent = `📁 ${file.name}`;
+            videoPreview.src = URL.createObjectURL(file);
+            videoPreviewContainer.style.display = 'block';
+            analyzeBtn.disabled = false;
+        }
+
+        analyzeBtn.addEventListener('click', async () => {
+            if (currentInputMode === 'upload') {
+                await analyzeUploadedVideo();
+            } else {
+                await analyzeVideoUrl();
+            }
+        });
+
+        async function analyzeUploadedVideo() {
+            if (!selectedFile) return;
+            
+            const scanMode = getScanMode();
+            const modeNames = { quick: 'Quick', deep: 'Deep', ultra: 'Ultra' };
+            showLoading(`${modeNames[scanMode]} Scan - Uploading video...`);
+            
+            const formData = new FormData();
+            formData.append('video', selectedFile);
+            formData.append('scan_mode', scanMode);
+            
+            try {
+                const frameCount = scanMode === 'ultra' ? 10 : (scanMode === 'deep' ? 7 : 3);
+                updateLoadingText(`Extracting ${frameCount} frames for analysis...`);
+                const response = await fetch('/analyze', { method: 'POST', body: formData });
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    hideLoading();
+                    return;
+                }
+                
+                updateLoadingText('Processing results...');
+                setTimeout(() => displayResults(data), 500);
+            } catch (error) {
+                alert('Error analyzing video: ' + error.message);
+                hideLoading();
+            }
+        }
+
+        async function analyzeVideoUrl() {
+            const url = videoUrlInput.value.trim();
+            if (!url) return;
+            
+            const scanMode = getScanMode();
+            const modeNames = { quick: 'Quick', deep: 'Deep', ultra: 'Ultra' };
+            
+            // Check if it's a YouTube URL to show ETA
+            const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
+            showLoading(`${modeNames[scanMode]} Scan - Fetching video...`, isYouTube);
+            
+            try {
+                const response = await fetch('/analyze-url', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url, scan_mode: scanMode })
+                });
+                
+                stopEtaTimer();
+                document.getElementById('loadingTitle').textContent = 'ANALYZING VIDEO';
+                document.getElementById('loadingEta').style.display = 'none';
+                document.getElementById('loadingEtaLabel').style.display = 'none';
+                document.getElementById('loadingProgressBar').style.display = 'none';
+                updateLoadingText('Processing frames with AI...');
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    hideLoading();
+                    return;
+                }
+                
+                updateLoadingText('Processing results...');
+                setTimeout(() => displayResults(data), 500);
+            } catch (error) {
+                alert('Error analyzing video: ' + error.message);
+                hideLoading();
+            }
+        }
+
+        function showLoading(text, showEta = false) {
+            loadingOverlay.style.display = 'flex';
+            document.getElementById('loadingSubtext').textContent = text;
+            
+            const etaElement = document.getElementById('loadingEta');
+            const etaLabel = document.getElementById('loadingEtaLabel');
+            const progressBar = document.getElementById('loadingProgressBar');
+            
+            if (showEta) {
+                etaElement.style.display = 'block';
+                etaLabel.style.display = 'block';
+                progressBar.style.display = 'block';
+                document.getElementById('loadingTitle').textContent = 'ANALYZING VIDEO';
+                startEtaTimer();
+            } else {
+                etaElement.style.display = 'none';
+                etaLabel.style.display = 'none';
+                progressBar.style.display = 'none';
+                document.getElementById('loadingTitle').textContent = 'ANALYZING VIDEO';
+            }
+        }
+
+        function startEtaTimer() {
+            etaSeconds = 0;
+            updateEtaDisplay();
+            document.getElementById('loadingProgressFill').style.width = '0%';
+            
+            etaTimer = setInterval(() => {
+                etaSeconds++;
+                updateEtaDisplay();
+                // Simulate progress (caps at 90% until actual completion)
+                const progress = Math.min(90, (etaSeconds / 60) * 100);
+                document.getElementById('loadingProgressFill').style.width = progress + '%';
+            }, 1000);
+        }
+
+        function updateEtaDisplay() {
+            const minutes = Math.floor(etaSeconds / 60);
+            const seconds = etaSeconds % 60;
+            const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('loadingEta').textContent = display;
+        }
+
+        function stopEtaTimer() {
+            if (etaTimer) {
+                clearInterval(etaTimer);
+                etaTimer = null;
+            }
+            document.getElementById('loadingProgressFill').style.width = '100%';
+        }
+
+        function updateLoadingText(text) {
+            document.getElementById('loadingSubtext').textContent = text;
+        }
+
+        function hideLoading() {
+            stopEtaTimer();
+            loadingOverlay.style.display = 'none';
+        }
+
+        function displayResults(data) {
+            try {
+                console.log('displayResults called with:', data);
+                hideLoading();
+                
+                // Get scan mode info
+                const scanMode = data.video_info.scan_mode || 'quick';
+                const framesAnalyzed = data.video_info.frames_analyzed || data.predictions.length;
+                const modeNames = { quick: 'Quick', deep: 'Deep', ultra: 'Ultra' };
+                const modeColors = { quick: '#00f0ff', deep: '#ff9500', ultra: '#bf5fff' };
+                
+                // Video stats
+                document.getElementById('videoStats').innerHTML = `
+                    <div class="stat-item">
+                        <div class="stat-value">${data.video_info.duration}s</div>
+                        <div class="stat-label">Duration</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${data.video_info.fps}</div>
+                        <div class="stat-label">Frame Rate</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${data.video_info.total_frames.toLocaleString()}</div>
+                        <div class="stat-label">Total Frames</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" style="color: ${modeColors[scanMode]}">${framesAnalyzed}</div>
+                        <div class="stat-label">${modeNames[scanMode]} Scan</div>
+                    </div>
+                `;
+                
+                // Verdict
+                const verdict = data.verdict;
+                const isAI = verdict.verdict === 'AI';
+                
+                // Apply background color overlay based on result
+                const resultOverlay = document.getElementById('resultOverlay');
+                resultOverlay.classList.remove('active', 'real', 'fake');
+                resultOverlay.classList.add('active', isAI ? 'fake' : 'real');
+                
+                const verdictCard = document.getElementById('verdictCard');
+                verdictCard.className = `cyber-card verdict-card ${isAI ? 'ai' : 'real'}`;
+                
+                const verdictIcon = document.getElementById('verdictIcon');
+                verdictIcon.className = `verdict-icon ${isAI ? 'ai' : 'real'}`;
+                verdictIcon.innerHTML = isAI ? '<i class="fas fa-robot"></i>' : '<i class="fas fa-user-check"></i>';
+                
+                const verdictTitle = document.getElementById('verdictTitle');
+                verdictTitle.className = `verdict-title ${isAI ? 'ai' : 'real'}`;
+                verdictTitle.textContent = isAI ? 'AI GENERATED' : 'AUTHENTIC VIDEO';
+                
+                const confidenceDisplay = document.getElementById('confidenceDisplay');
+                confidenceDisplay.className = `confidence-display ${isAI ? 'ai' : 'real'}`;
+                confidenceDisplay.textContent = verdict.confidence + '%';
+                
+                const confidenceFill = document.getElementById('confidenceFill');
+                confidenceFill.className = `confidence-fill ${isAI ? 'ai' : 'real'}`;
+                confidenceFill.style.width = verdict.confidence + '%';
+                
+                let detailsText = `SCAN RESULTS: ${verdict.ai_count} AI DETECTION${verdict.ai_count !== 1 ? 'S' : ''} | ${verdict.real_count} AUTHENTIC FRAME${verdict.real_count !== 1 ? 'S' : ''}`;
+                
+                // Add warning if low confidence triggered the AI verdict
+                if (verdict.low_confidence_flag) {
+                    detailsText += ' | ⚠️ LOW CONFIDENCE REAL FRAME DETECTED (<60%)';
+                }
+                
+                document.getElementById('verdictDetails').textContent = detailsText;
+                
+                // Display Analysis Report
+                if (verdict.report) {
+                    displayReport(verdict.report, isAI);
+                }
+                
+                // Frames
+                document.getElementById('framesContainer').innerHTML = data.predictions.map(pred => `
+                    <div class="col-md-4">
+                        <div class="frame-card">
+                            <img src="${pred.web_path}" class="frame-img" alt="${pred.position}">
+                            <div class="frame-info">
+                                <div class="frame-label">${pred.position}</div>
+                                <div class="frame-timestamp">@ ${pred.timestamp} seconds</div>
+                                <div class="frame-prediction ${pred.class.toLowerCase()}">
+                                    <span class="prediction-class ${pred.class.toLowerCase()}">${pred.class}</span>
+                                    <span class="prediction-confidence">${pred.confidence}%</span>
+                                    <div class="confidence-bar mt-2">
+                                        <div class="confidence-fill ${pred.class.toLowerCase()}" style="width: ${pred.confidence}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                resultsSection.style.display = 'block';
+                resultsSection.scrollIntoView({ behavior: 'smooth' });
+                
+                // Store analysis data for PDF generation
+                lastAnalysisData = data;
+                
+                // Reset PDF button state
+                const pdfBtn = document.getElementById('downloadPdfBtn');
+                pdfBtn.disabled = false;
+                pdfBtn.classList.remove('generating');
+                pdfBtn.innerHTML = '<i class="fas fa-file-pdf"></i><span>Download Forensic Report (PDF)</span>';
+                document.getElementById('pdfStatus').textContent = '';
+                
+                console.log('displayResults completed successfully');
+            } catch (error) {
+                console.error('Error in displayResults:', error);
+                alert('Error displaying results: ' + error.message);
+                hideLoading();
+            }
+        }
+
+        function displayReport(report, isAI) {
+            const typeClass = isAI ? 'ai' : 'real';
+            
+            // Summary
+            const summaryEl = document.getElementById('reportSummary');
+            summaryEl.className = `report-summary ${typeClass}`;
+            summaryEl.textContent = report.summary;
+            
+            // Reasons
+            const reasonsEl = document.getElementById('reportReasons');
+            reasonsEl.innerHTML = report.reasons.map(reason => `
+                <div class="report-reason-item">
+                    <div class="report-reason-icon ${typeClass}">
+                        <i class="fas ${reason.icon}"></i>
+                    </div>
+                    <div class="report-reason-content">
+                        <div class="report-reason-title">${reason.title}</div>
+                        <div class="report-reason-detail">${reason.detail}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Technical Details
+            const technicalEl = document.getElementById('reportTechnical');
+            technicalEl.innerHTML = `
+                <div class="report-technical-title">
+                    <i class="fas fa-cog"></i>
+                    TECHNICAL DETAILS
+                </div>
+                <div class="report-technical-grid">
+                    ${report.technical_details.map(detail => `
+                        <div class="report-technical-item">${detail}</div>
+                    `).join('')}
+                </div>
+            `;
+            
+            // Recommendation
+            const recommendationEl = document.getElementById('reportRecommendation');
+            recommendationEl.className = `report-recommendation ${typeClass}`;
+            recommendationEl.innerHTML = `
+                <i class="fas ${isAI ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i>
+                <div>${report.recommendation}</div>
+            `;
+        }
+
+        // PDF Download Function
+        async function downloadPdfReport() {
+            if (!lastAnalysisData) {
+                document.getElementById('pdfStatus').textContent = 'No analysis data available';
+                document.getElementById('pdfStatus').className = 'pdf-status error';
+                return;
+            }
+
+            const pdfBtn = document.getElementById('downloadPdfBtn');
+            const pdfStatus = document.getElementById('pdfStatus');
+            
+            // Show generating state
+            pdfBtn.disabled = true;
+            pdfBtn.classList.add('generating');
+            pdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Generating Report...</span>';
+            pdfStatus.textContent = 'Creating comprehensive forensic report...';
+            pdfStatus.className = 'pdf-status';
+
+            try {
+                const response = await fetch('/generate-report', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(lastAnalysisData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate report');
+                }
+
+                const result = await response.json();
+                
+                if (result.success && result.download_url) {
+                    // Trigger automatic download
+                    pdfStatus.textContent = 'Report generated! Starting download...';
+                    pdfStatus.className = 'pdf-status success';
+                    
+                    // Open download in new window/tab for better compatibility
+                    window.open(result.download_url, '_blank');
+                    
+                    // Update button state
+                    pdfBtn.disabled = false;
+                    pdfBtn.classList.remove('generating');
+                    pdfBtn.innerHTML = '<i class="fas fa-check-circle"></i><span>Download Again</span>';
+                    pdfStatus.textContent = 'Report downloaded successfully!';
+                } else {
+                    throw new Error(result.error || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('PDF generation error:', error);
+                pdfBtn.disabled = false;
+                pdfBtn.classList.remove('generating');
+                pdfBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Retry Download</span>';
+                pdfStatus.textContent = 'Error generating report. Please try again.';
+                pdfStatus.className = 'pdf-status error';
+            }
+        }
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            selectedFile = null;
+            videoInput.value = '';
+            videoPreview.src = '';
+            videoPreviewContainer.style.display = 'none';
+            videoUrlInput.value = '';
+            analyzeBtn.disabled = true;
+            resultsSection.style.display = 'none';
+            lastAnalysisData = null;  // Clear analysis data
+            // Remove background color overlay
+            const resultOverlay = document.getElementById('resultOverlay');
+            resultOverlay.classList.remove('active', 'real', 'fake');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>

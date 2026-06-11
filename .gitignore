@@ -1,0 +1,26 @@
+# Environment variables - NEVER commit these
+.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyc
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Generated files (auto-created at runtime)
+uploads/
+static/frames/
+static/reports/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

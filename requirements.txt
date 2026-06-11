@@ -1,0 +1,10 @@
+# Truesight AI Dependencies
+flask
+opencv-python-headless
+requests
+yt-dlp
+reportlab
+python-dotenv
+gunicorn
+inference-sdk
+waitress
